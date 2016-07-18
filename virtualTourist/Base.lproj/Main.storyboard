@@ -19,23 +19,52 @@
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="XD2-A6-QU3">
+                            <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="RQo-mN-aSr">
                                 <rect key="frame" x="0.0" y="64" width="600" height="536"/>
-                                <connections>
-                                    <outlet property="delegate" destination="BYZ-38-t0r" id="Jdr-sq-04r"/>
-                                </connections>
-                            </mapView>
+                                <subviews>
+                                    <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="XD2-A6-QU3">
+                                        <rect key="frame" x="0.0" y="0.0" width="600" height="536"/>
+                                        <connections>
+                                            <outlet property="delegate" destination="BYZ-38-t0r" id="Jdr-sq-04r"/>
+                                        </connections>
+                                    </mapView>
+                                    <label hidden="YES" opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Tap pins to delete" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="LuC-Qc-hhb">
+                                        <rect key="frame" x="0.0" y="536" width="600" height="0.0"/>
+                                        <color key="backgroundColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                        <color key="tintColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="50" id="5Lh-lQ-0Uc"/>
+                                        </constraints>
+                                        <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="19"/>
+                                        <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                        <nil key="highlightedColor"/>
+                                        <variation key="default">
+                                            <mask key="constraints">
+                                                <exclude reference="5Lh-lQ-0Uc"/>
+                                            </mask>
+                                        </variation>
+                                    </label>
+                                </subviews>
+                            </stackView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstItem="XD2-A6-QU3" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="QUC-Vp-V9I"/>
-                            <constraint firstAttribute="trailing" secondItem="XD2-A6-QU3" secondAttribute="trailing" id="a1d-GW-468"/>
-                            <constraint firstItem="XD2-A6-QU3" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" id="c2H-Lg-7M4"/>
-                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="XD2-A6-QU3" secondAttribute="bottom" id="qXg-r7-8tA"/>
+                            <constraint firstAttribute="trailing" secondItem="RQo-mN-aSr" secondAttribute="trailing" id="CWe-gM-4gc"/>
+                            <constraint firstItem="RQo-mN-aSr" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" id="Mow-E0-Wnl"/>
+                            <constraint firstItem="RQo-mN-aSr" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="QXL-Rc-hDG"/>
+                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="RQo-mN-aSr" secondAttribute="bottom" id="wzs-90-MjI"/>
                         </constraints>
                     </view>
-                    <navigationItem key="navigationItem" title="Virtual Tourist" id="sM5-Sz-81W"/>
+                    <navigationItem key="navigationItem" title="Virtual Tourist" id="sM5-Sz-81W">
+                        <barButtonItem key="rightBarButtonItem" title="Edit" id="Kqh-Dp-SVO">
+                            <connections>
+                                <action selector="edit:" destination="BYZ-38-t0r" id="rbq-jj-tV7"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
                     <connections>
+                        <outlet property="editButton" destination="Kqh-Dp-SVO" id="R8w-f0-bPY"/>
+                        <outlet property="labelForDeletePin" destination="LuC-Qc-hhb" id="Atu-mf-ViB"/>
                         <outlet property="mapView" destination="XD2-A6-QU3" id="K1V-Kk-hgM"/>
                         <segue destination="P2Q-Nu-QFZ" kind="show" identifier="showDetailPin" id="hFl-TV-6FY"/>
                     </connections>
@@ -47,7 +76,7 @@
         <!--Detail Pin View Controller-->
         <scene sceneID="rdK-cs-SRg">
             <objects>
-                <viewController id="P2Q-Nu-QFZ" customClass="DetailPinViewController" customModule="virtualTourist" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="PhotoAlbumPinViewController" id="P2Q-Nu-QFZ" customClass="DetailPinViewController" customModule="virtualTourist" customModuleProvider="target" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="PCh-zM-Lde"/>
                         <viewControllerLayoutGuide type="bottom" id="4BT-m7-dW7"/>
@@ -87,7 +116,7 @@
                                                 <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="dlh-Ji-T6z">
                                                     <rect key="frame" x="0.0" y="0.0" width="100" height="100"/>
                                                 </imageView>
-                                                <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="YsL-s8-5lZ">
+                                                <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" hidesWhenStopped="YES" animating="YES" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="YsL-s8-5lZ">
                                                     <rect key="frame" x="32" y="31" width="37" height="37"/>
                                                 </activityIndicatorView>
                                             </subviews>
@@ -110,8 +139,8 @@
                                     </collectionViewCell>
                                 </cells>
                                 <connections>
-                                    <outlet property="dataSource" destination="P2Q-Nu-QFZ" id="EZB-yJ-1Hs"/>
-                                    <outlet property="delegate" destination="P2Q-Nu-QFZ" id="vMl-Gx-Olp"/>
+                                    <outlet property="dataSource" destination="P2Q-Nu-QFZ" id="tSR-gF-uQp"/>
+                                    <outlet property="delegate" destination="P2Q-Nu-QFZ" id="gEM-8z-9nd"/>
                                 </connections>
                             </collectionView>
                         </subviews>
@@ -131,9 +160,9 @@
                         </constraints>
                     </view>
                     <connections>
-                        <outlet property="collectionView" destination="afq-cq-qWJ" id="upN-os-7ej"/>
-                        <outlet property="collectionViewFlowLayout" destination="UMd-A5-U5r" id="StD-WT-INT"/>
-                        <outlet property="mapView" destination="LWs-Iq-lLZ" id="WNv-k8-BDl"/>
+                        <outlet property="collectionView" destination="afq-cq-qWJ" id="NcP-r9-bJX"/>
+                        <outlet property="collectionViewFlowLayout" destination="UMd-A5-U5r" id="7w4-Py-ayv"/>
+                        <outlet property="mapView" destination="LWs-Iq-lLZ" id="MrQ-uo-92J"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="rIn-SA-4DE" userLabel="First Responder" sceneMemberID="firstResponder"/>

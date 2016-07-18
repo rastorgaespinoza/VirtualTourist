@@ -8,21 +8,42 @@
 
 import UIKit
 import MapKit
+import CoreData
 
 class MapViewController: UIViewController {
-
-    private var annotations = [MKPointAnnotation]()
     
+    // MARK: - Properties
+    private var stack: CoreDataStack!
+    
+    @IBOutlet weak var editButton: UIBarButtonItem!
     @IBOutlet weak var mapView: MKMapView!
+    @IBOutlet weak var labelForDeletePin: UILabel!
     
+    // MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
+        editing = false
+        
+        stack = (UIApplication.sharedApplication().delegate as! AppDelegate).stack
+        
+        restoreMapRegion()
         
         let longpressGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
         mapView.addGestureRecognizer(longpressGestureRecognizer)
-        
-        restoreMapRegion()
 
+        fetchPins()
+
+    }
+    
+    // MARK: - Actions and Methods
+    @IBAction func edit(sender: AnyObject) {
+        editing = !editing
+        
+        editButton.title = editing ? "Done" : "Edit"
+        UIView.animateWithDuration(0.3) {
+            
+            self.labelForDeletePin.hidden = self.editing ? false : true
+        }
     }
     
     func handleLongPress(sender: UIGestureRecognizer) {
@@ -30,54 +51,71 @@ class MapViewController: UIViewController {
         if sender.state == .Ended || sender.state == .Changed{
             return
         }else {
+            
             // Here we get the CGPoint for the touch and convert it to latitude and longitude coordinates to display on the map
-//            mapView.removeAnnotations(annotations)
             let point: CGPoint = sender.locationInView(mapView)
             let locCoord: CLLocationCoordinate2D = mapView.convertPoint(point, toCoordinateFromView: mapView)
+            
+            //add pin to core data
             // Then all you have to do is create the annotation and add it to the map
-            let dropPin = MKPointAnnotation()
-            dropPin.coordinate = locCoord
+            let pin = Pin(coordinate: locCoord, context: stack.context )
             
-            annotations.append(dropPin)
-//            mapView.addAnnotation(dropPin)
-            
-            mapView.addAnnotations(annotations)
+            stack.save()
+//            try? stack.saveContext()
+
+//            let dropPin = MKPointAnnotation()
+//            dropPin.coordinate = pin.coordinate
+
+            mapView.addAnnotation(pin)
         }
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-        let detailPinVC = segue.destinationViewController as! DetailPinViewController
-        detailPinVC.pin = (sender as! MKAnnotation)
+    func fetchPins(){
+        let fetchRequest = NSFetchRequest(entityName: "Pin")
+        
+        do{
+            if let pins = try stack.context.executeFetchRequest(fetchRequest) as? [Pin] {
+                for pin in pins {
+                    mapView.addAnnotation(pin)
+                }
+            }
+            
+        }catch{
+            fatalError("Error when fetched Pin values")
+        }
+        
     }
     
-//    func setLocations(locations: [String]) {
-//        
-//        mapView.removeAnnotations(annotations)
-//        annotations.removeAll()
-//        for student in locations {
-//            
-//            let lat = CLLocationDegrees(student.latitude )
-//            let long = CLLocationDegrees(student.longitude)
-//            
-//            let coordinate = CLLocationCoordinate2D(latitude: lat, longitude: long)
-//            
-//            let first = student.firstName
-//            let last = student.lastName
-//            let mediaURL = student.mediaURL
-//            
-//            // Here we create the annotation and set its coordiate, title, and subtitle properties
-//            let annotation = MKPointAnnotation()
-//            annotation.coordinate = coordinate
-//            annotation.title = "\(first) \(last)"
-//            annotation.subtitle = mediaURL
-//            
-//            // Finally we place the annotation in an array of annotations.
-//            annotations.append(annotation)
-//        }
-//        
-//        // When the array is complete, we add the annotations to the map.
-//        mapView.addAnnotations(annotations)
-//    }
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+
+        let photoAlbumPinVC = segue.destinationViewController as! DetailPinViewController
+        
+        // Create Fetch Request
+        let fr = NSFetchRequest(entityName: "Photo")
+        
+        fr.sortDescriptors = [ NSSortDescriptor(key: "url", ascending: false)]
+        // So far we have a search that will match ALL notes. However, we're
+        // only interested in those within the current notebook:
+        // NSPredicate to the rescue!
+
+        let pin = sender as! Pin
+        
+        let pred = NSPredicate(format: "pin = %@", argumentArray: [pin])
+        
+        fr.predicate = pred
+        
+        // Create FetchedResultsController
+        let fc = NSFetchedResultsController(fetchRequest: fr,
+                                            managedObjectContext: stack.context,
+                                            sectionNameKeyPath: nil,
+                                            cacheName: nil)
+        
+        // Inject it into the photoAlbumPinVC
+        photoAlbumPinVC.fetchedResultsController = fc
+        
+        // Inject the pin too!
+        photoAlbumPinVC.pin = pin
+    }
 
 }
 
@@ -94,7 +132,6 @@ extension MapViewController: MKMapViewDelegate {
             pinView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: reuseId)
             pinView!.canShowCallout = false
             pinView!.pinTintColor = UIColor.redColor()
-//            pinView!.rightCalloutAccessoryView = UIButton(type: .DetailDisclosure)
             pinView!.animatesDrop = true
         }
         else {
@@ -112,26 +149,23 @@ extension MapViewController: MKMapViewDelegate {
     func mapView(mapView: MKMapView, didSelectAnnotationView view: MKAnnotationView) {
         mapView.deselectAnnotation(view.annotation, animated: true)
         
-        let annotation = view.annotation
-        performSegueWithIdentifier("showDetailPin", sender: annotation)
-    }
-    
-    // This delegate method is implemented to respond to taps. It opens the system browser
-    // to the URL specified in the annotationViews subtitle property.
-    func mapView(mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
-
-        if view.selected {
-            performSegueWithIdentifier("showDetailPin", sender: nil)
+        if editing {
+            let annotation = view.annotation as! Pin
+            mapView.removeAnnotation(annotation)
+            stack.context.deleteObject(annotation)
+            
+            stack.save()
+//            try! stack.saveContext()
+            
+//            CoreDataStackManager.sharedInstance().delete(annotation.pin)
+//            CoreDataStackManager.sharedInstance().saveContext()
+//            mapView.removeAnnotation(annotation)
         }
-        if let annot = view.annotation {
-            performSegueWithIdentifier("showDetailPin", sender: nil)
+        else {
+            let annotation = view.annotation
+            performSegueWithIdentifier("showDetailPin", sender: (annotation as! Pin) )
         }
-        if control == view.rightCalloutAccessoryView {
-            performSegueWithIdentifier("showDetailPin", sender: nil)
-            if let urlToOpen = view.annotation?.subtitle! {
-//                Helper.openURL(self, urlString: urlToOpen)
-            }
-        }
+        
     }
     
     //Setting the zoom level for a MKMapView

@@ -6,15 +6,20 @@
 //  Copyright © 2016 Rodrigo Astorga. All rights reserved.
 //
 
-import Foundation
+import UIKit
 
 class FlickrClient {
     
     typealias completionData = (result: AnyObject!, error: NSError?) -> Void
     typealias completionForViewController = (success: Bool, errorString: String?) -> Void
+    typealias completionWithURLPhotos = (success: Bool, photoURLs: [String], errorString: String?) -> Void
     
     let session = NSURLSession.sharedSession()
+    let stack: CoreDataStack!
     
+    init(){
+        stack = (UIApplication.sharedApplication().delegate as! AppDelegate).stack
+    }
     // MARK: - Shared Instance
     class func sharedInstance() -> FlickrClient {
         struct Singleton {
@@ -181,18 +186,18 @@ class FlickrClient {
             sendError("Flickr API returned an error. See error code and message in \(parsedResult)")
             return
         }
-        
-        /* GUARD: Is "photos" key in our result? */
-        guard let photosDictionary = parsedResult[FlickrResponseKeys.Photos] as? [String:AnyObject] else {
-            sendError("Cannot find keys '\(FlickrResponseKeys.Photos)' in \(parsedResult)")
-            return
-        }
+//        
+//        /* GUARD: Is "photos" key in our result? */
+//        guard let photosDictionary = parsedResult[FlickrResponseKeys.Photos] as? [String:AnyObject] else {
+//            sendError("Cannot find keys '\(FlickrResponseKeys.Photos)' in \(parsedResult)")
+//            return
+//        }
         
         /* GUARD: Is "pages" key in the photosDictionary? */
-        guard let totalPages = photosDictionary[FlickrResponseKeys.Pages] as? Int else {
-            sendError("Cannot find key '\(FlickrResponseKeys.Pages)' in \(photosDictionary)")
-            return
-        }
+//        guard let totalPages = photosDictionary[FlickrResponseKeys.Pages] as? Int else {
+//            sendError("Cannot find key '\(FlickrResponseKeys.Pages)' in \(photosDictionary)")
+//            return
+//        }
         
         parseJSONWithCompletionHandler(data, completionHandler: completionForValidation)
     }

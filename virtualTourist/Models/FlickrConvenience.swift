@@ -11,7 +11,7 @@ import MapKit
 
 extension FlickrClient {
     
-    func getPhotosByLocation(pin: MKAnnotation){
+    func getPhotosByLocation(pin: MKAnnotation, completionPhotos: completionWithURLPhotos ){
         // create session and request
 
         let methodParameters = [
@@ -32,6 +32,7 @@ extension FlickrClient {
             if let result = result[FlickrResponseKeys.Photos] as? [String: AnyObject],
             let photos = result[FlickrResponseKeys.Photo] as? [ [String: AnyObject]] {
                 var arrayPhotos: [[String:AnyObject] ] = []
+                var arrayPhotoURLs = [String]()
                 var indexOfPhotos: [Int] = []
                 
                 for _ in photos {
@@ -51,11 +52,24 @@ extension FlickrClient {
                     arrayPhotos.append(photos[index])
                 }
                 
-                for photos in arrayPhotos {
-                    print(photos["url_m"]!)
+                if arrayPhotos.isEmpty {
+                    completionPhotos(success: true, photoURLs: arrayPhotoURLs, errorString: nil)
+                }else{
+                    arrayPhotoURLs = arrayPhotos.map({ (photoDict: [String : AnyObject]) -> String in
+                        return photoDict["url_m"] as! String
+                    })
+                    
+                    completionPhotos(success: true, photoURLs: arrayPhotoURLs, errorString: nil)
+//                    for photos in arrayPhotos {
+//                        arrayPhotoURLs.append(photos["url_m"] as! String)
+//                    }
                 }
+                
                 print("Fin")
                 
+            }
+            else{
+                completionPhotos(success: false, photoURLs: [String](), errorString: "not cast the data")
             }
         }
         

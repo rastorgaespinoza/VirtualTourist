@@ -8,11 +8,24 @@
 
 import UIKit
 import MapKit
+import CoreData
 
 class DetailPinViewController: UIViewController {
 
     let reuseIdentifier = "cellPhoto" // identifier in collection view
-    var pin: MKAnnotation?
+    var pin: Pin?
+    var stack: CoreDataStack!
+    var blockOperations: [NSBlockOperation] = []
+    
+    var fetchedResultsController: NSFetchedResultsController? {
+        didSet{
+            // whenever the frc changes, we execute the search and
+            // reload the table
+            fetchedResultsController?.delegate = self
+            executeSearch()
+            collectionView?.reloadData()
+        }
+    }
 
     @IBOutlet weak var mapView: MKMapView!
     @IBOutlet weak var collectionView: UICollectionView!
@@ -21,8 +34,9 @@ class DetailPinViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        stack = (UIApplication.sharedApplication().delegate as! AppDelegate).stack
         setReqion()
-        searchByLatLong()
+        
         
         let space: CGFloat = 3.0
         let dimensionWidth = (view.frame.size.width - (2 * space)) / 3.0
@@ -30,6 +44,19 @@ class DetailPinViewController: UIViewController {
         collectionViewFlowLayout.minimumInteritemSpacing = space
         collectionViewFlowLayout.minimumLineSpacing = space
         collectionViewFlowLayout.itemSize = CGSizeMake(dimensionWidth, dimensionWidth)
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        if let pin = pin,
+            let photos = pin.photos{
+            if photos.array.isEmpty {
+                searchByLatLong()
+            }
+        }else{
+            searchByLatLong()
+        }
     }
     
     private func setReqion() {
@@ -50,7 +77,19 @@ class DetailPinViewController: UIViewController {
     
     private func searchByLatLong() {
         if let pin = pin {
-            FlickrClient.sharedInstance().getPhotosByLocation(pin)
+            FlickrClient.sharedInstance().getPhotosByLocation(pin, completionPhotos: { (success, photoURLs, errorString) in
+                if success {
+                    _ = photoURLs.map({ (url: String) -> Photo in
+                        
+                        let photo = Photo(url: url, context: self.stack.context)
+                        
+                        photo.pin = self.pin
+                        
+                        return photo
+                    })
+                }
+                
+            })
         }
         
 //            displayImageFromFlickrBySearch(methodParameters)
@@ -68,32 +107,186 @@ class DetailPinViewController: UIViewController {
 extension DetailPinViewController: UICollectionViewDataSource {
     
     func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
+
+        // Get the photo
+        let photo = fetchedResultsController?.objectAtIndexPath(indexPath) as! Photo
+        
+        // Get the cell
         let cell = collectionView.dequeueReusableCellWithReuseIdentifier(reuseIdentifier, forIndexPath: indexPath) as! PhotoCollectionViewCell
         
+        // Sync note -> cell
+        cell.photoImageView.image = photo.image
+        
+        // Return the cell
         return cell
     }
     
+    func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
+        if let fc = fetchedResultsController{
+            return (fc.sections?.count)!
+        }else {
+            return 1
+        }
+    }
+    
+    
     func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return 1
+        if let fc = fetchedResultsController{
+            return (fc.sections![section].numberOfObjects)
+        }else {
+            return 1
+        }
+    }
+
+}
+
+// MARK: - Fetches
+extension DetailPinViewController{
+    
+    func executeSearch(){
+        if let fc = fetchedResultsController{
+            do{
+                try fc.performFetch()
+            }catch let e as NSError {
+                print("Error while trying to perform a search: \n\(e)\n\(fetchedResultsController)")
+                
+            }
+        }
     }
 }
 
-extension MKMapView {
+// MARK:  - Delegate
+// code extract from Stackoerflow:
+// http://stackoverflow.com/questions/12656648/uicollectionview-performing-updates-using-performbatchupdates
+// answer answered Mar 5 '15 at 12:45 For Plot
+extension DetailPinViewController: NSFetchedResultsControllerDelegate{
     
-    var zoomLevel: Int {
-        get {
-            return Int(log2(360 * (Double(frame.size.width/256) / self.region.span.longitudeDelta)) + 1);
+    func controllerWillChangeContent(controller: NSFetchedResultsController) {
+        blockOperations.removeAll(keepCapacity: false)
+    }
+    
+    func controller(controller: NSFetchedResultsController,
+                    didChangeSection sectionInfo: NSFetchedResultsSectionInfo,
+                                     atIndex sectionIndex: Int,
+                                             forChangeType type: NSFetchedResultsChangeType) {
+        
+        let indexSet = NSIndexSet(index: sectionIndex)
+        
+        switch type{
+        case .Insert:
+            print("Insert Section: \(sectionIndex)")
+            
+            blockOperations.append(
+                NSBlockOperation(block: { [weak self] in
+                    if let this = self {
+                        this.collectionView!.insertSections( indexSet )
+                    }
+                    })
+            )
+        case .Update:
+            print("Update Section: \(sectionIndex)")
+            blockOperations.append(
+                NSBlockOperation(block: { [weak self] in
+                    if let this = self {
+                        this.collectionView!.reloadSections( indexSet )
+                    }
+                    })
+            )
+        case .Delete:
+            print("Delete Section: \(sectionIndex)")
+            
+            blockOperations.append(
+                NSBlockOperation(block: { [weak self] in
+                    if let this = self {
+                        this.collectionView!.deleteSections( indexSet )
+                    }
+                    })
+            )
+        default:
+            break
         }
         
-        set (newZoomLevel){
-            setCenterCoordinate(self.centerCoordinate, zoomLevel: newZoomLevel, animated: false)
-        }
     }
     
-    private func setCenterCoordinate(coordinate: CLLocationCoordinate2D, zoomLevel: Int, animated: Bool){
-        let span = MKCoordinateSpanMake(0, 360 / pow(2, Double(zoomLevel)) * Double(self.frame.size.width) / 256)
-        setRegion(MKCoordinateRegionMake(centerCoordinate, span), animated: animated)
+    
+    func controller(controller: NSFetchedResultsController,
+                    didChangeObject anObject: AnyObject,
+                                    atIndexPath indexPath: NSIndexPath?,
+                                                forChangeType type: NSFetchedResultsChangeType,
+                                                              newIndexPath: NSIndexPath?) {
+        
+        
+        switch type {
+        case .Insert:
+            print("Insert Object: \(newIndexPath)")
+            
+            blockOperations.append(
+                NSBlockOperation(block: { [weak self] in
+                    if let this = self {
+                        this.collectionView!.insertItemsAtIndexPaths([newIndexPath!])
+                    }
+                    })
+            )
+        case .Update:
+            print("Update Object: \(indexPath)")
+            blockOperations.append(
+                NSBlockOperation(block: { [weak self] in
+                    if let this = self {
+                        this.collectionView!.reloadItemsAtIndexPaths([indexPath!])
+                    }
+                    })
+            )
+        case .Move:
+            print("Move Object: \(indexPath)")
+            
+            blockOperations.append(
+                NSBlockOperation(block: { [weak self] in
+                    if let this = self {
+                        this.collectionView!.moveItemAtIndexPath(indexPath!, toIndexPath: newIndexPath!)
+                    }
+                    })
+            )
+        case .Delete:
+            print("Delete Object: \(indexPath)")
+            
+            blockOperations.append(
+                NSBlockOperation(block: { [weak self] in
+                    if let this = self {
+                        this.collectionView!.deleteItemsAtIndexPaths([indexPath!])
+                    }
+                    })
+            )
+        }
+        
+    }
+    
+    func controllerDidChangeContent(controller: NSFetchedResultsController) {
+        collectionView!.performBatchUpdates({ () -> Void in
+            for operation: NSBlockOperation in self.blockOperations {
+                operation.start()
+            }
+            }, completion: { (finished) -> Void in
+                self.blockOperations.removeAll(keepCapacity: false)
+        })
     }
 }
+
+//extension MKMapView {
+//    
+//    var zoomLevel: Int {
+//        get {
+//            return Int(log2(360 * (Double(frame.size.width/256) / self.region.span.longitudeDelta)) + 1);
+//        }
+//        
+//        set (newZoomLevel){
+//            setCenterCoordinate(self.centerCoordinate, zoomLevel: newZoomLevel, animated: false)
+//        }
+//    }
+//    
+//    private func setCenterCoordinate(coordinate: CLLocationCoordinate2D, zoomLevel: Int, animated: Bool){
+//        let span = MKCoordinateSpanMake(0, 360 / pow(2, Double(zoomLevel)) * Double(self.frame.size.width) / 256)
+//        setRegion(MKCoordinateRegionMake(centerCoordinate, span), animated: animated)
+//    }
+//}
 
 
