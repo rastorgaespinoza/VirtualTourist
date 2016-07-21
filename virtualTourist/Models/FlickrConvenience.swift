@@ -54,24 +54,62 @@ extension FlickrClient {
                 
                 if arrayPhotos.isEmpty {
                     completionPhotos(success: true, photoURLs: arrayPhotoURLs, errorString: nil)
+                    
                 }else{
                     arrayPhotoURLs = arrayPhotos.map({ (photoDict: [String : AnyObject]) -> String in
                         return photoDict["url_m"] as! String
                     })
                     
                     completionPhotos(success: true, photoURLs: arrayPhotoURLs, errorString: nil)
-//                    for photos in arrayPhotos {
-//                        arrayPhotoURLs.append(photos["url_m"] as! String)
-//                    }
+                    
+                    
+                    
                 }
-                
-                print("Fin")
+                return
                 
             }
             else{
                 completionPhotos(success: false, photoURLs: [String](), errorString: "not cast the data")
+                return
             }
         }
+        
+    }
+
+    /// Download the image from URL
+    func downloadImage(url: String, completion: (imageData: NSData!, errorString: String?) -> Void) {
+        
+        guard let url = NSURL(string: url) else{
+            completion(imageData: nil, errorString: "Not valid url")
+            return
+        }
+        
+        let task = session.dataTaskWithURL(url) { (data, response, error) in
+            
+            func sendError(error: String) {
+                completion(imageData: nil, errorString: error)
+            }
+            
+            guard error == nil else {
+                sendError(error!.localizedDescription)
+                return
+            }
+            
+            guard let data = data else {
+                sendError("No data for url")
+                return
+            }
+            
+            /* GUARD: Did we get a successful 2XX response? */
+            guard let statusCode = (response as? NSHTTPURLResponse)?.statusCode where statusCode >= 200 && statusCode <= 299 else {
+                sendError("Bad response")
+                return
+            }
+            
+            completion(imageData: data, errorString: nil)
+        }
+        
+        task.resume()
         
     }
     

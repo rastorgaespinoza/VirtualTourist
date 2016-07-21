@@ -1,5 +1,5 @@
 //
-//  DetailPinViewController.swift
+//  PhotoAlbumViewController.swift
 //  virtualTourist
 //
 //  Created by Rodrigo Astorga on 27-06-16.
@@ -10,8 +10,9 @@ import UIKit
 import MapKit
 import CoreData
 
-class DetailPinViewController: UIViewController {
+class PhotoAlbumViewController: UIViewController {
 
+    // MARK: Properties
     let reuseIdentifier = "cellPhoto" // identifier in collection view
     var pin: Pin?
     var stack: CoreDataStack!
@@ -31,19 +32,14 @@ class DetailPinViewController: UIViewController {
     @IBOutlet weak var collectionView: UICollectionView!
     @IBOutlet weak var collectionViewFlowLayout: UICollectionViewFlowLayout!
     
+    // MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
 
         stack = (UIApplication.sharedApplication().delegate as! AppDelegate).stack
         setReqion()
-        
-        
-        let space: CGFloat = 3.0
-        let dimensionWidth = (view.frame.size.width - (2 * space)) / 3.0
-        
-        collectionViewFlowLayout.minimumInteritemSpacing = space
-        collectionViewFlowLayout.minimumLineSpacing = space
-        collectionViewFlowLayout.itemSize = CGSizeMake(dimensionWidth, dimensionWidth)
+        setCollectionViewFlowLayout()
+
     }
     
     override func viewWillAppear(animated: Bool) {
@@ -57,6 +53,16 @@ class DetailPinViewController: UIViewController {
         }else{
             searchByLatLong()
         }
+    }
+    
+    // MARK: - Methods
+    private func setCollectionViewFlowLayout(){
+        let space: CGFloat = 3.0
+        let dimensionWidth = (view.frame.size.width - (2 * space)) / 3.0
+        
+        collectionViewFlowLayout.minimumInteritemSpacing = space
+        collectionViewFlowLayout.minimumLineSpacing = space
+        collectionViewFlowLayout.itemSize = CGSizeMake(dimensionWidth, dimensionWidth)
     }
     
     private func setReqion() {
@@ -79,7 +85,7 @@ class DetailPinViewController: UIViewController {
         if let pin = pin {
             FlickrClient.sharedInstance().getPhotosByLocation(pin, completionPhotos: { (success, photoURLs, errorString) in
                 if success {
-                    _ = photoURLs.map({ (url: String) -> Photo in
+                    let photos = photoURLs.map({ (url: String) -> Photo in
                         
                         let photo = Photo(url: url, context: self.stack.context)
                         
@@ -87,6 +93,8 @@ class DetailPinViewController: UIViewController {
                         
                         return photo
                     })
+                    
+                    self.backgroundDownloadImage(photos)
                 }
                 
             })
@@ -100,11 +108,28 @@ class DetailPinViewController: UIViewController {
 //        }
     }
     
+    func backgroundDownloadImage(photos: [Photo]){
+        
+        stack.performBackgroundBatchOperation { (workerContext) in
+            
+            for photo in photos {
+                if photo.image == nil {
+                    FlickrClient.sharedInstance().downloadImage(photo.url!, completion: { (imageData, errorString) in
+                        if let imageData = imageData {
+                            photo.imageData = imageData
+                        }
+                        
+                    })
+                }
+            }
+        }
+    }
+    
     
 
 }
 
-extension DetailPinViewController: UICollectionViewDataSource {
+extension PhotoAlbumViewController: UICollectionViewDataSource {
     
     func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
 
@@ -115,7 +140,13 @@ extension DetailPinViewController: UICollectionViewDataSource {
         let cell = collectionView.dequeueReusableCellWithReuseIdentifier(reuseIdentifier, forIndexPath: indexPath) as! PhotoCollectionViewCell
         
         // Sync note -> cell
-        cell.photoImageView.image = photo.image
+        if let image = photo.image {
+            cell.photoImageView.image = image
+            cell.activityIndicator.stopAnimating()
+        }else{
+            cell.activityIndicator.startAnimating()
+        }
+        
         
         // Return the cell
         return cell
@@ -141,7 +172,7 @@ extension DetailPinViewController: UICollectionViewDataSource {
 }
 
 // MARK: - Fetches
-extension DetailPinViewController{
+extension PhotoAlbumViewController{
     
     func executeSearch(){
         if let fc = fetchedResultsController{
@@ -155,11 +186,12 @@ extension DetailPinViewController{
     }
 }
 
+
 // MARK:  - Delegate
 // code extract from Stackoerflow:
 // http://stackoverflow.com/questions/12656648/uicollectionview-performing-updates-using-performbatchupdates
 // answer answered Mar 5 '15 at 12:45 For Plot
-extension DetailPinViewController: NSFetchedResultsControllerDelegate{
+extension PhotoAlbumViewController: NSFetchedResultsControllerDelegate{
     
     func controllerWillChangeContent(controller: NSFetchedResultsController) {
         blockOperations.removeAll(keepCapacity: false)

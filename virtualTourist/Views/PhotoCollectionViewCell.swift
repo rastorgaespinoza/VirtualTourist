@@ -12,15 +12,15 @@ class PhotoCollectionViewCell: UICollectionViewCell {
     @IBOutlet weak var photoImageView: UIImageView!
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     
-    override func prepareForReuse() {
-        
-        super.prepareForReuse()
-        
-        if photoImageView.image == nil {
-            activityIndicator.startAnimating()
-        }else {
-            activityIndicator.stopAnimating()
-        }
-    }
+//    override func prepareForReuse() {
+//        
+//        super.prepareForReuse()
+//        
+//        if photoImageView.image == nil {
+//            activityIndicator.startAnimating()
+//        }else {
+//            activityIndicator.stopAnimating()
+//        }
+//    }
     
 }

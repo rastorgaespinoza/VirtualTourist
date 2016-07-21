@@ -18,9 +18,9 @@ class Pin: NSManagedObject, MKAnnotation {
             return CLLocationCoordinate2D(latitude: (latitude as! CLLocationDegrees),
                                           longitude: (longitude as! CLLocationDegrees))
         }
-        set(value) {
-            latitude = value.latitude
-            longitude = value.longitude
+        set {
+            latitude = newValue.latitude
+            longitude = newValue.longitude
         }
     }
     

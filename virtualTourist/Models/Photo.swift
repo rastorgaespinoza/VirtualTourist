@@ -13,8 +13,8 @@ import CoreData
 class Photo: NSManagedObject {
     
     var image: UIImage? {
-        if let photo = photo{
-            return photo.image
+        if let imageData = imageData{
+            return UIImage(data: imageData)
         }else{
             return nil
         }
@@ -26,7 +26,7 @@ class Photo: NSManagedObject {
             
             self.url = url
 //            pin: Pin?
-//            photo: PhotoFrame?
+//            imageData: NSData?
 
             
         }else{

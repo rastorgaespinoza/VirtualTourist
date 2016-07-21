@@ -21,11 +21,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationWillResignActive(application: UIApplication) {
-//        stack.save()
+        stack.save()
     }
 
     func applicationDidEnterBackground(application: UIApplication) {
-//        stack.save
+        stack.save()
     }
     
     
@@ -45,7 +45,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 //            print("==== finished background operation ====")
         }
     }
-
 
 }
 

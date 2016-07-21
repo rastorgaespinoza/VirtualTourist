@@ -1,5 +1,5 @@
 //
-//  MapViewController.swift
+//  TravelLocationMapViewController.swift
 //  virtualTourist
 //
 //  Created by Rodrigo Astorga on 23-06-16.
@@ -10,7 +10,7 @@ import UIKit
 import MapKit
 import CoreData
 
-class MapViewController: UIViewController {
+class TravelLocationMapViewController: UIViewController {
     
     // MARK: - Properties
     private var stack: CoreDataStack!
@@ -88,7 +88,7 @@ class MapViewController: UIViewController {
     
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
 
-        let photoAlbumPinVC = segue.destinationViewController as! DetailPinViewController
+        let photoAlbumPinVC = segue.destinationViewController as! PhotoAlbumViewController
         
         // Create Fetch Request
         let fr = NSFetchRequest(entityName: "Photo")
@@ -120,7 +120,7 @@ class MapViewController: UIViewController {
 }
 
 // MARK: - MKMapViewDelegate
-extension MapViewController: MKMapViewDelegate {
+extension TravelLocationMapViewController: MKMapViewDelegate {
     
     func mapView(mapView: MKMapView, viewForAnnotation annotation: MKAnnotation) -> MKAnnotationView? {
         
