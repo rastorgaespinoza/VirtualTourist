@@ -11,17 +11,21 @@ import MapKit
 
 extension FlickrClient {
     
+    typealias FlickrKeys = FlickrClient.FlickrParamKeys
+    typealias FlickrValues = FlickrClient.FlickrParamValues
+    
     func getPhotosByLocation(pin: MKAnnotation, completionPhotos: completionWithURLPhotos ){
-        // create session and request
 
-        let methodParameters = [
-            FlickrClient.FlickrParameterKeys.Method: FlickrClient.FlickrParameterValues.SearchMethod,
-            FlickrClient.FlickrParameterKeys.APIKey: FlickrClient.FlickrParameterValues.APIKey,
-            FlickrClient.FlickrParameterKeys.BoundingBox: bboxString(pin),
-            FlickrClient.FlickrParameterKeys.SafeSearch: FlickrClient.FlickrParameterValues.UseSafeSearch,
-            FlickrClient.FlickrParameterKeys.Extras: FlickrClient.FlickrParameterValues.MediumURL,
-            FlickrClient.FlickrParameterKeys.Format: FlickrClient.FlickrParameterValues.ResponseFormat,
-            FlickrClient.FlickrParameterKeys.NoJSONCallback: FlickrClient.FlickrParameterValues.DisableJSONCallback
+        let methodParameters: [String: AnyObject] = [
+            FlickrKeys.Method:          FlickrValues.SearchMethod,
+            FlickrKeys.APIKey:          FlickrValues.APIKey,
+            FlickrKeys.BoundingBox:     bboxString(pin),
+            FlickrKeys.SafeSearch:      FlickrValues.UseSafeSearch,
+            FlickrKeys.Extras:          FlickrValues.MediumURL,
+            FlickrKeys.Format:          FlickrValues.ResponseFormat,
+            FlickrKeys.NoJSONCallback:  FlickrValues.DisableJSONCallback,
+            FlickrKeys.PerPage:         FlickrValues.PerPage,
+            FlickrKeys.Page:            1
         ]
         
         guard let url = flickrURLFromParameters(methodParameters) else {
@@ -31,41 +35,29 @@ extension FlickrClient {
         taskForMethod(url) { (result, error) in
             if let result = result[FlickrResponseKeys.Photos] as? [String: AnyObject],
             let photos = result[FlickrResponseKeys.Photo] as? [ [String: AnyObject]] {
-                var arrayPhotos: [[String:AnyObject] ] = []
+
                 var arrayPhotoURLs = [String]()
-                var indexOfPhotos: [Int] = []
+
                 
-                for _ in photos {
-                    let randomPhotoIndex = Int(arc4random_uniform(UInt32(photos.count)))
-                    
-                    if !indexOfPhotos.contains(randomPhotoIndex) {
-                        indexOfPhotos.append(randomPhotoIndex)
-                    }
-                    
-                    if indexOfPhotos.count == 21 {
-                        break
-                    }
-                    
-                }
+                arrayPhotoURLs = photos.map({ (photoDict: [String : AnyObject]) -> String in
+                    return photoDict["url_m"] as! String
+                })
                 
-                for index in indexOfPhotos {
-                    arrayPhotos.append(photos[index])
-                }
-                
-                if arrayPhotos.isEmpty {
-                    completionPhotos(success: true, photoURLs: arrayPhotoURLs, errorString: nil)
-                    
-                }else{
-                    arrayPhotoURLs = arrayPhotos.map({ (photoDict: [String : AnyObject]) -> String in
-                        return photoDict["url_m"] as! String
-                    })
-                    
-                    completionPhotos(success: true, photoURLs: arrayPhotoURLs, errorString: nil)
-                    
-                    
-                    
-                }
+                completionPhotos(success: true, photoURLs: arrayPhotoURLs, errorString: nil)
                 return
+                
+//                if arrayPhotos.isEmpty {
+//                    completionPhotos(success: true, photoURLs: arrayPhotoURLs, errorString: nil)
+//                    
+//                }else{
+//                    arrayPhotoURLs = arrayPhotos.map({ (photoDict: [String : AnyObject]) -> String in
+//                        return photoDict["url_m"] as! String
+//                    })
+//                    
+//                    completionPhotos(success: true, photoURLs: arrayPhotoURLs, errorString: nil)      
+//                    
+//                }
+//                return
                 
             }
             else{
@@ -91,18 +83,18 @@ extension FlickrClient {
             }
             
             guard error == nil else {
-                sendError(error!.localizedDescription)
+                sendError("There was an error in request. (\(error!.code)): \(error!.localizedDescription)")
                 return
             }
             
             guard let data = data else {
-                sendError("No data for url")
+                sendError("your request does not return data")
                 return
             }
             
             /* GUARD: Did we get a successful 2XX response? */
             guard let statusCode = (response as? NSHTTPURLResponse)?.statusCode where statusCode >= 200 && statusCode <= 299 else {
-                sendError("Bad response")
+                sendError("your request returned an invalid state. (\((response as? NSHTTPURLResponse)?.statusCode))")
                 return
             }
             
@@ -115,7 +107,6 @@ extension FlickrClient {
     
     private func bboxString(pin: MKAnnotation) -> String {
         // ensure bbox is bounded by minimum and maximums
-        
         let latitude = pin.coordinate.latitude
         let longitude = pin.coordinate.longitude
         

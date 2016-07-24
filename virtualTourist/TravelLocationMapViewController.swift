@@ -75,9 +75,7 @@ class TravelLocationMapViewController: UIViewController {
         
         do{
             if let pins = try stack.context.executeFetchRequest(fetchRequest) as? [Pin] {
-                for pin in pins {
-                    mapView.addAnnotation(pin)
-                }
+                mapView.addAnnotations(pins)
             }
             
         }catch{
@@ -148,22 +146,15 @@ extension TravelLocationMapViewController: MKMapViewDelegate {
     
     func mapView(mapView: MKMapView, didSelectAnnotationView view: MKAnnotationView) {
         mapView.deselectAnnotation(view.annotation, animated: true)
+        let annotation = view.annotation as! Pin
         
         if editing {
-            let annotation = view.annotation as! Pin
             mapView.removeAnnotation(annotation)
             stack.context.deleteObject(annotation)
-            
             stack.save()
-//            try! stack.saveContext()
-            
-//            CoreDataStackManager.sharedInstance().delete(annotation.pin)
-//            CoreDataStackManager.sharedInstance().saveContext()
-//            mapView.removeAnnotation(annotation)
         }
         else {
-            let annotation = view.annotation
-            performSegueWithIdentifier("showDetailPin", sender: (annotation as! Pin) )
+            performSegueWithIdentifier("showDetailPin", sender: annotation )
         }
         
     }

@@ -19,15 +19,13 @@ class Photo: NSManagedObject {
             return nil
         }
     }
+    
     convenience init(url: String, context: NSManagedObjectContext){
         
         if let entity = NSEntityDescription.entityForName("Photo", inManagedObjectContext: context) {
             self.init(entity: entity, insertIntoManagedObjectContext: context)
             
             self.url = url
-//            pin: Pin?
-//            imageData: NSData?
-
             
         }else{
             fatalError("entity not found")

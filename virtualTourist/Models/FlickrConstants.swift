@@ -6,7 +6,7 @@
 //  Copyright © 2016 Rodrigo Astorga. All rights reserved.
 //
 
-import Foundation
+import UIKit
 
 extension FlickrClient {
     
@@ -23,7 +23,7 @@ extension FlickrClient {
     }
     
     // MARK: Flickr Parameter Keys
-    struct FlickrParameterKeys {
+    struct FlickrParamKeys {
         static let Method = "method"
         static let APIKey = "api_key"
         static let GalleryID = "gallery_id"
@@ -34,10 +34,11 @@ extension FlickrClient {
         static let Text = "text"
         static let BoundingBox = "bbox"
         static let Page = "page"
+        static let PerPage = "per_page"
     }
     
     // MARK: Flickr Parameter Values
-    struct FlickrParameterValues {
+    struct FlickrParamValues {
         static let SearchMethod = "flickr.photos.search"
         static let APIKey = "04cf008cfd1a2b9a75a673d46018c8cb"
         static let ResponseFormat = "json"
@@ -46,6 +47,7 @@ extension FlickrClient {
         static let GalleryID = "5704-72157622566655097"
         static let MediumURL = "url_m"
         static let UseSafeSearch = "1"
+        static let PerPage = 21
     }
     
     // MARK: Flickr Response Keys
@@ -63,15 +65,17 @@ extension FlickrClient {
     struct FlickrResponseValues {
         static let OKStatus = "ok"
     }
-    
-    
-    
+
     // MARK: Métodos CRUD (create, read, update, delete)
     struct HTTPMethods {
         static let GET = "GET"
         static let POST = "POST"
         static let PUT = "PUT"
         static let DELETE = "DELETE"
+    }
+    
+    struct Images {
+        static let placeHolder = UIImage(named: "placeholder")!
     }
     
 }

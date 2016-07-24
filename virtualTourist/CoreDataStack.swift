@@ -43,16 +43,7 @@ struct CoreDataStack {
             return nil
         }
         self.model = model
-        
-        
-        
-        // Create the store coordinator (for one contex)
-//        coordinator = NSPersistentStoreCoordinator(managedObjectModel: model)
-//        
-//        // create a context and add connect it to the coordinator
-//        context = NSManagedObjectContext(concurrencyType: .MainQueueConcurrencyType)
-//        context.persistentStoreCoordinator = coordinator
-        
+
         // Create the store coordinator
         coordinator = NSPersistentStoreCoordinator(managedObjectModel: model)
         
@@ -103,16 +94,6 @@ struct CoreDataStack {
         
         
     }
-    
-//    // MARK:  - Utils
-//    func addStoreCoordinator(storeType: String,
-//                             configuration: String?,
-//                             storeURL: NSURL,
-//                             options : [NSObject : AnyObject]?) throws{
-//        
-//        try coordinator.addPersistentStoreWithType(NSSQLiteStoreType, configuration: nil, URL: dbURL, options: nil)
-//        
-//    }
     
     // MARK:  - Utils
     func addStoreTo(coordinator coord : NSPersistentStoreCoordinator,

@@ -12,6 +12,16 @@ class PhotoCollectionViewCell: UICollectionViewCell {
     @IBOutlet weak var photoImageView: UIImageView!
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     
+    func setPhotoCell(photo: Photo) {
+        if let image = photo.image {
+            photoImageView.image = image
+            activityIndicator.stopAnimating()
+        }else{
+            photoImageView.image = FlickrClient.Images.placeHolder
+            activityIndicator.startAnimating()
+        }
+    }
+    
 //    override func prepareForReuse() {
 //        
 //        super.prepareForReuse()

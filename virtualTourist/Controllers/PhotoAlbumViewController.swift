@@ -44,15 +44,18 @@ class PhotoAlbumViewController: UIViewController {
     
     override func viewWillAppear(animated: Bool) {
         super.viewWillAppear(animated)
-        
-        if let pin = pin,
-            let photos = pin.photos{
-            if photos.array.isEmpty {
-                searchByLatLong()
-            }
-        }else{
+        if fetchedResultsController?.fetchedObjects?.count == 0 {
             searchByLatLong()
         }
+//        if fetchedResultsController.fetchedObjects?.count > 0 {
+//        if let pin = pin,
+//            let photos = pin.photos{
+//            if photos.array.isEmpty {
+//                searchByLatLong()
+//            }
+//        }else{
+//            searchByLatLong()
+//        }
     }
     
     // MARK: - Methods
@@ -85,16 +88,29 @@ class PhotoAlbumViewController: UIViewController {
         if let pin = pin {
             FlickrClient.sharedInstance().getPhotosByLocation(pin, completionPhotos: { (success, photoURLs, errorString) in
                 if success {
-                    let photos = photoURLs.map({ (url: String) -> Photo in
-                        
-                        let photo = Photo(url: url, context: self.stack.context)
-                        
-                        photo.pin = self.pin
-                        
-                        return photo
-                    })
+                    var photos = [Photo]()
+                    dispatch_async(dispatch_get_main_queue()) {
+                        for url in photoURLs {
+                            
+                            let picture = Photo(url: url, context: self.stack.context)
+                            
+                            picture.pin = self.pin
+                            
+                            photos.append(picture)
+                        }
+                        self.downloadImage(photos)
+                    }
                     
-                    self.backgroundDownloadImage(photos)
+//                    let photos = photoURLs.map({ (url: String) -> Photo in
+//                        
+//                        let photo = Photo(url: url, context: self.stack.context)
+//                        
+//                        photo.pin = self.pin
+//                        
+//                        return photo
+//                    })
+                    
+                    
                 }
                 
             })
@@ -108,21 +124,35 @@ class PhotoAlbumViewController: UIViewController {
 //        }
     }
     
-    func backgroundDownloadImage(photos: [Photo]){
+    func downloadImage(photos: [Photo]){
         
-        stack.performBackgroundBatchOperation { (workerContext) in
-            
-            for photo in photos {
-                if photo.image == nil {
-                    FlickrClient.sharedInstance().downloadImage(photo.url!, completion: { (imageData, errorString) in
+        for photo in photos {
+            if photo.image == nil {
+                FlickrClient.sharedInstance().downloadImage(photo.url!, completion: { (imageData, errorString) in
+
+                    dispatch_async(dispatch_get_main_queue()) {
                         if let imageData = imageData {
                             photo.imageData = imageData
                         }
-                        
-                    })
-                }
+                    }
+                    
+                })
             }
         }
+        
+//        stack.performBackgroundBatchOperation { (workerContext) in
+//            
+//            for photo in photos {
+//                if photo.image == nil {
+//                    FlickrClient.sharedInstance().downloadImage(photo.url!, completion: { (imageData, errorString) in
+//                        if let imageData = imageData {
+//                            photo.imageData = imageData
+//                        }
+//                        
+//                    })
+//                }
+//            }
+//        }
     }
     
     
@@ -140,13 +170,7 @@ extension PhotoAlbumViewController: UICollectionViewDataSource {
         let cell = collectionView.dequeueReusableCellWithReuseIdentifier(reuseIdentifier, forIndexPath: indexPath) as! PhotoCollectionViewCell
         
         // Sync note -> cell
-        if let image = photo.image {
-            cell.photoImageView.image = image
-            cell.activityIndicator.stopAnimating()
-        }else{
-            cell.activityIndicator.startAnimating()
-        }
-        
+        cell.setPhotoCell(photo)
         
         // Return the cell
         return cell
@@ -159,7 +183,6 @@ extension PhotoAlbumViewController: UICollectionViewDataSource {
             return 1
         }
     }
-    
     
     func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         if let fc = fetchedResultsController{
@@ -247,7 +270,6 @@ extension PhotoAlbumViewController: NSFetchedResultsControllerDelegate{
                                                 forChangeType type: NSFetchedResultsChangeType,
                                                               newIndexPath: NSIndexPath?) {
         
-        
         switch type {
         case .Insert:
             print("Insert Object: \(newIndexPath)")
@@ -303,22 +325,58 @@ extension PhotoAlbumViewController: NSFetchedResultsControllerDelegate{
     }
 }
 
-//extension MKMapView {
+///////////// MARK: - Fetched Results Controller Delegate
+
+//var changes: [(NSFetchedResultsChangeType, NSIndexPath)]?
+//
+//func controllerWillChangeContent(controller: NSFetchedResultsController) {
+//    changes = [(NSFetchedResultsChangeType, NSIndexPath)]()
 //    
-//    var zoomLevel: Int {
-//        get {
-//            return Int(log2(360 * (Double(frame.size.width/256) / self.region.span.longitudeDelta)) + 1);
-//        }
-//        
-//        set (newZoomLevel){
-//            setCenterCoordinate(self.centerCoordinate, zoomLevel: newZoomLevel, animated: false)
-//        }
-//    }
+//    print("in controllerWillChangeContent")
+//}
+//
+//func controllerDidChangeContent(controller: NSFetchedResultsController) {
 //    
-//    private func setCenterCoordinate(coordinate: CLLocationCoordinate2D, zoomLevel: Int, animated: Bool){
-//        let span = MKCoordinateSpanMake(0, 360 / pow(2, Double(zoomLevel)) * Double(self.frame.size.width) / 256)
-//        setRegion(MKCoordinateRegionMake(centerCoordinate, span), animated: animated)
+//    print("in controllerDidChangeContent. changes.count: \(changes!.count)")
+//    
+//    collectionView.performBatchUpdates({() -> Void in
+//        for change in self.changes! {
+//            switch (change) {
+//                
+//            case (.Insert, let indexPath):
+//                self.collectionView.insertItemsAtIndexPaths([indexPath])
+//            case (.Update, let indexPath):
+//                self.collectionView.reloadItemsAtIndexPaths([indexPath])
+//            case (.Delete, let indexPath):
+//                self.collectionView.deleteItemsAtIndexPaths([indexPath])
+//            default:
+//                break
+//            }
+//        }
+//        }, completion: { (success: Bool) -> Void in
+//    })
+//}
+//
+//func controller(controller: NSFetchedResultsController, didChangeObject anObject: AnyObject, atIndexPath indexPath: NSIndexPath?, forChangeType type: NSFetchedResultsChangeType, newIndexPath: NSIndexPath?) {
+//    
+//    switch type{
+//    case .Insert:
+//        print("bam. insert!")
+//        let change = (type, newIndexPath!)
+//        changes!.append(change)
+//        break
+//    case .Delete:
+//        print("bam. delete!")
+//        let change = (type, indexPath!)
+//        changes!.append(change)
+//        break
+//    case .Update:
+//        print("bam. update!")
+//        let change = (type, indexPath!)
+//        changes!.append(change)
+//        break
+//    case .Move:
+//        print("bam. move!")
+//        break
 //    }
 //}
-
-

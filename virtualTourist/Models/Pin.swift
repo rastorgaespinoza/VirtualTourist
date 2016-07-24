@@ -41,7 +41,6 @@ class Pin: NSManagedObject, MKAnnotation {
             self.init(entity: entity, insertIntoManagedObjectContext: context)
             self.latitude = latitude
             self.longitude = longitude
-//            photos: NSOrderedSet?
         }else{
             fatalError("Unable to find Entity name!")
         }
