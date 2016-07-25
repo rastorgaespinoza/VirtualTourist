@@ -23,6 +23,7 @@ class TravelLocationMapViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         editing = false
+        labelForDeletePin.hidden = !editing
         
         stack = (UIApplication.sharedApplication().delegate as! AppDelegate).stack
         
