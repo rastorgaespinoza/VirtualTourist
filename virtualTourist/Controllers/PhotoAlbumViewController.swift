@@ -27,6 +27,8 @@ class PhotoAlbumViewController: UIViewController {
     let reuseIdentifier = "cellPhoto" // identifier in collection view
     var pin: Pin?
     var stack: CoreDataStack!
+    
+    var task: NSURLSessionDataTask?
     var blockOperations: [NSBlockOperation] = []
     
     var fetchedResultsController: NSFetchedResultsController? {
@@ -49,7 +51,7 @@ class PhotoAlbumViewController: UIViewController {
     // MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        newCollectionButton.enabled = false
         stack = (UIApplication.sharedApplication().delegate as! AppDelegate).stack
         setReqion()
         setCollectionViewFlowLayout()
@@ -60,11 +62,12 @@ class PhotoAlbumViewController: UIViewController {
         super.viewWillAppear(animated)
         if let photos = fetchedResultsController?.fetchedObjects as? [Photo] {
             if photos.isEmpty {
-                
                 searchByLatLong()
+            }else{
+                newCollectionButton.enabled = true
             }
         }else{
-            
+            newCollectionButton.enabled = true
         }
 
     }
@@ -111,6 +114,10 @@ class PhotoAlbumViewController: UIViewController {
         activityIndicator.startAnimating()
         if let pin = pin {
             FlickrClient.sharedInstance().getPhotosForPin(pin, completionPhotos: { (success, photoURLs, errorString) in
+                
+                dispatch_async(dispatch_get_main_queue()) {
+                    self.newCollectionButton.enabled = true
+                }
                 var photos = [Photo]()
                 
                 if success {
@@ -128,6 +135,8 @@ class PhotoAlbumViewController: UIViewController {
                             photos.append(picture)
                         }
                         
+                        self.stack.save()
+                        
                         self.noImagesLabel.hidden = photos.isEmpty ? false : true
 
                     }
@@ -144,6 +153,7 @@ class PhotoAlbumViewController: UIViewController {
             })
         }
         else{
+            newCollectionButton.enabled = true
             activityIndicator.stopAnimating()
             noImagesLabel.hidden = false
         }
@@ -261,125 +271,10 @@ extension PhotoAlbumViewController{
 }
 
 
-// MARK:  - Delegate
-// code extract from Stackoerflow:
-// http://stackoverflow.com/questions/12656648/uicollectionview-performing-updates-using-performbatchupdates
-// answer answered Mar 5 '15 at 12:45 For Plot
+// MARK:  - Fetched Results Controller Delegate
+// code extract from CollorCollection Udacity:
 extension PhotoAlbumViewController: NSFetchedResultsControllerDelegate{
-    
-//    func controllerWillChangeContent(controller: NSFetchedResultsController) {
-//        blockOperations.removeAll(keepCapacity: false)
-//    }
-//    
-//    func controller(controller: NSFetchedResultsController,
-//                    didChangeSection sectionInfo: NSFetchedResultsSectionInfo,
-//                                     atIndex sectionIndex: Int,
-//                                             forChangeType type: NSFetchedResultsChangeType) {
-//        
-//        let indexSet = NSIndexSet(index: sectionIndex)
-//        
-//        switch type{
-//        case .Insert:
-//            print("Insert Section: \(sectionIndex)")
-//            
-//            blockOperations.append(
-//                NSBlockOperation(block: { [weak self] in
-//                    if let this = self {
-//                        this.collectionView!.insertSections( indexSet )
-//                    }
-//                    })
-//            )
-//        case .Update:
-//            print("Update Section: \(sectionIndex)")
-//            blockOperations.append(
-//                NSBlockOperation(block: { [weak self] in
-//                    if let this = self {
-//                        this.collectionView!.reloadSections( indexSet )
-//                    }
-//                    })
-//            )
-//        case .Delete:
-//            print("Delete Section: \(sectionIndex)")
-//            
-//            blockOperations.append(
-//                NSBlockOperation(block: { [weak self] in
-//                    if let this = self {
-//                        this.collectionView!.deleteSections( indexSet )
-//                    }
-//                    })
-//            )
-//        default:
-//            break
-//        }
-//        
-//    }
-//    
-//    
-//    func controller(controller: NSFetchedResultsController,
-//                    didChangeObject anObject: AnyObject,
-//                                    atIndexPath indexPath: NSIndexPath?,
-//                                                forChangeType type: NSFetchedResultsChangeType,
-//                                                              newIndexPath: NSIndexPath?) {
-//        
-//        switch type {
-//        case .Insert:
-//            print("Insert Object: \(newIndexPath)")
-//            
-//            blockOperations.append(
-//                NSBlockOperation(block: { [weak self] in
-//                    if let this = self {
-//                        this.collectionView!.insertItemsAtIndexPaths([newIndexPath!])
-//                    }
-//                    })
-//            )
-//        case .Update:
-//            print("Update Object: \(indexPath)")
-//            blockOperations.append(
-//                NSBlockOperation(block: { [weak self] in
-//                    if let this = self {
-//                        this.collectionView!.reloadItemsAtIndexPaths([indexPath!])
-//                    }
-//                    })
-//            )
-//        case .Move:
-//            print("Move Object: \(indexPath)")
-//            
-//            blockOperations.append(
-//                NSBlockOperation(block: { [weak self] in
-//                    if let this = self {
-//                        this.collectionView!.moveItemAtIndexPath(indexPath!, toIndexPath: newIndexPath!)
-//                    }
-//                    })
-//            )
-//        case .Delete:
-//            print("Delete Object: \(indexPath)")
-//            
-//            blockOperations.append(
-//                NSBlockOperation(block: { [weak self] in
-//                    if let this = self {
-//                        this.collectionView!.deleteItemsAtIndexPaths([indexPath!])
-//                    }
-//                    })
-//            )
-//        }
-//        
-//    }
-//    
-//    func controllerDidChangeContent(controller: NSFetchedResultsController) {
-//        collectionView!.performBatchUpdates({ () -> Void in
-//            for operation: NSBlockOperation in self.blockOperations {
-//                operation.start()
-//            }
-//            }, completion: { (finished) -> Void in
-//                self.blockOperations.removeAll(keepCapacity: false)
-//        })
-//    }
-    
-    
-    
-    ////////////////////////////
-    // MARK: - Fetched Results Controller Delegate
-    
+
     // Whenever changes are made to Core Data the following three methods are invoked. This first method is used to create
     // three fresh arrays to record the index paths that will be changed.
     func controllerWillChangeContent(controller: NSFetchedResultsController) {
@@ -387,43 +282,27 @@ extension PhotoAlbumViewController: NSFetchedResultsControllerDelegate{
         insertedIndexPaths = [NSIndexPath]()
         deletedIndexPaths = [NSIndexPath]()
         updatedIndexPaths = [NSIndexPath]()
-        
-        print("in controllerWillChangeContent")
     }
     
     // The second method may be called multiple times, once for each Color object that is added, deleted, or changed.
     // We store the incex paths into the three arrays.
-    
     func controller(controller: NSFetchedResultsController, didChangeObject anObject: AnyObject, atIndexPath indexPath: NSIndexPath?, forChangeType type: NSFetchedResultsChangeType, newIndexPath: NSIndexPath?) {
         
         switch type{
             
         case .Insert:
-            print("Insert an item")
-            // Here we are noting that a new Color instance has been added to Core Data. We remember its index path
-            // so that we can add a cell in "controllerDidChangeContent". Note that the "newIndexPath" parameter has
-            // the index path that we want in this case
             insertedIndexPaths.append(newIndexPath!)
             break
         case .Delete:
-            print("Delete an item")
-            // Here we are noting that a Color instance has been deleted from Core Data. We keep remember its index path
-            // so that we can remove the corresponding cell in "controllerDidChangeContent". The "indexPath" parameter has
-            // value that we want in this case.
+
             deletedIndexPaths.append(indexPath!)
             break
         case .Update:
-            print("Update an item.")
-            // We don't expect Color instances to change after they are created. But Core Data would
-            // notify us of changes if any occured. This can be useful if you want to respond to changes
-            // that come about after data is downloaded. For example, when an images is downloaded from
-            // Flickr in the Virtual Tourist app
+
             updatedIndexPaths.append(indexPath!)
             break
         case .Move:
             print("Move an item. We don't expect to see this in this app.")
-            break
-        default:
             break
         }
     }
@@ -456,58 +335,3 @@ extension PhotoAlbumViewController: NSFetchedResultsControllerDelegate{
     }
 }
 
-///////////// MARK: - Fetched Results Controller Delegate
-
-//var changes: [(NSFetchedResultsChangeType, NSIndexPath)]?
-//
-//func controllerWillChangeContent(controller: NSFetchedResultsController) {
-//    changes = [(NSFetchedResultsChangeType, NSIndexPath)]()
-//    
-//    print("in controllerWillChangeContent")
-//}
-//
-//func controllerDidChangeContent(controller: NSFetchedResultsController) {
-//    
-//    print("in controllerDidChangeContent. changes.count: \(changes!.count)")
-//    
-//    collectionView.performBatchUpdates({() -> Void in
-//        for change in self.changes! {
-//            switch (change) {
-//                
-//            case (.Insert, let indexPath):
-//                self.collectionView.insertItemsAtIndexPaths([indexPath])
-//            case (.Update, let indexPath):
-//                self.collectionView.reloadItemsAtIndexPaths([indexPath])
-//            case (.Delete, let indexPath):
-//                self.collectionView.deleteItemsAtIndexPaths([indexPath])
-//            default:
-//                break
-//            }
-//        }
-//        }, completion: { (success: Bool) -> Void in
-//    })
-//}
-//
-//func controller(controller: NSFetchedResultsController, didChangeObject anObject: AnyObject, atIndexPath indexPath: NSIndexPath?, forChangeType type: NSFetchedResultsChangeType, newIndexPath: NSIndexPath?) {
-//    
-//    switch type{
-//    case .Insert:
-//        print("bam. insert!")
-//        let change = (type, newIndexPath!)
-//        changes!.append(change)
-//        break
-//    case .Delete:
-//        print("bam. delete!")
-//        let change = (type, indexPath!)
-//        changes!.append(change)
-//        break
-//    case .Update:
-//        print("bam. update!")
-//        let change = (type, indexPath!)
-//        changes!.append(change)
-//        break
-//    case .Move:
-//        print("bam. move!")
-//        break
-//    }
-//}

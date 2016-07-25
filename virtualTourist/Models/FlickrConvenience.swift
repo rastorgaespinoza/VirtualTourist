@@ -25,7 +25,6 @@ extension FlickrClient {
             FlickrKeys.NoJSONCallback:  FlickrValues.DisableJSONCallback,
             FlickrKeys.PerPage:         FlickrValues.PerPage,
             FlickrKeys.Page:            1,
-//            FlickrKeys.BoundingBox:     bboxString(pin),
             FlickrKeys.Latitude:        pin.coordinate.latitude,
             FlickrKeys.Longitude:       pin.coordinate.longitude
             
@@ -46,80 +45,12 @@ extension FlickrClient {
             }else{
                 completionPhotos(success: false, photoURLs: [String:AnyObject](), errorString: "not cast the data")
             }
- 
-//            if let result = result[FlickrResponseKeys.Photos] as? [String: AnyObject],
-//            let photos = result[FlickrResponseKeys.Photo] as? [ [String: AnyObject]] {
-//
-//                var arrayPhotoURLs = [String]()
-//
-//                arrayPhotoURLs = photos.map({ (photoDict: [String : AnyObject]) -> String in
-//                    return photoDict["url_m"] as! String
-//                })
-//                
-//                completionPhotos(success: true, photoURLs: arrayPhotoURLs, errorString: nil)
-//                return
-//                
-////                if arrayPhotos.isEmpty {
-////                    completionPhotos(success: true, photoURLs: arrayPhotoURLs, errorString: nil)
-////                    
-////                }else{
-////                    arrayPhotoURLs = arrayPhotos.map({ (photoDict: [String : AnyObject]) -> String in
-////                        return photoDict["url_m"] as! String
-////                    })
-////                    
-////                    completionPhotos(success: true, photoURLs: arrayPhotoURLs, errorString: nil)      
-////                    
-////                }
-////                return
-//                
-//            }
-//            else{
-//                completionPhotos(success: false, photoURLs: [String](), errorString: "not cast the data")
-//                return
-//            }
+
         }
-        
-//        if withPageNumber == nil {
-//            if let result = result[FlickrResponseKeys.Photos] as? [String: AnyObject] {
-//                
-//                if let totalPages = result[FlickrResponseKeys.Pages] as? Int{
-//                    let pageLimit = min(totalPages, 189) // Considering (4000 photos max in query) / (21 per collectionView) == 190.476...
-//                    let randomPage = Int(arc4random_uniform(UInt32(pageLimit))) + 1
-//                    
-//                    dispatch_async(dispatch_get_main_queue() ) {
-//                        self.getPhotosByLocation(pin, withPageNumber: randomPage, completionPhotos: { (success, photoURLs, errorString) in
-//                            if let result = result[FlickrResponseKeys.Photos] as? [String: AnyObject],
-//                                let photos = result[FlickrResponseKeys.Photo] as? [ [String: AnyObject]] {
-//                                
-//                                var arrayPhotoURLs = [String]()
-//                                
-//                                arrayPhotoURLs = photos.map({ (photoDict: [String : AnyObject]) -> String in
-//                                    return photoDict["url_m"] as! String
-//                                })
-//                                dispatch_async(dispatch_get_main_queue()){
-//                                    completionPhotos(success: true, photoURLs: arrayPhotoURLs, errorString: nil)
-//                                }
-//                                
-//                                return
-//                                
-//                            }
-//                            else{
-//                                dispatch_async(dispatch_get_main_queue()){
-//                                    completionPhotos(success: false, photoURLs: [String](), errorString: "not cast the data")
-//                                }
-//                                return
-//                            }
-//                        })
-//                    }
-//                }
-//                
-//            }
-//        }
-        
     }
     
     func getPhotosForPin(pin: MKAnnotation, completionPhotos: completionWithURLPhotos){
-        
+
         getPhotosByLocation(pin) { (success, photoURLs, errorString) in
             guard success else {
                 completionPhotos(success: false, photoURLs: [String: AnyObject](), errorString: errorString!)
@@ -164,6 +95,9 @@ extension FlickrClient {
                     }
                     
                 })
+                
+                
+
             }
             
         }

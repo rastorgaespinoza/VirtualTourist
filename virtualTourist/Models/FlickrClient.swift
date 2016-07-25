@@ -32,7 +32,7 @@ class FlickrClient {
     }
     
 
-    func taskForMethod(method: NSURL, completionHandler: completionData ) -> NSURLSessionDataTask {
+    func taskForMethod(method: NSURL, completionHandler: completionData ) {
         
         // 1. Configuración del request
         let request = NSURLRequest(URL: method)
@@ -52,8 +52,6 @@ class FlickrClient {
         }
         
         task.resume()
-        
-        return task
         
     }
 
