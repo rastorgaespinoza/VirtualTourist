@@ -41,14 +41,14 @@ class TravelLocationMapViewController: UIViewController {
         editing = !editing
         
         editButton.title = editing ? "Done" : "Edit"
+        
         UIView.animateWithDuration(0.3) {
-            
             self.labelForDeletePin.hidden = self.editing ? false : true
         }
     }
     
     func handleLongPress(sender: UIGestureRecognizer) {
-        // This is important if you only want to receive one tap and hold event
+
         if sender.state == .Ended || sender.state == .Changed{
             return
         }else {
@@ -62,10 +62,6 @@ class TravelLocationMapViewController: UIViewController {
             let pin = Pin(coordinate: locCoord, context: stack.context )
             
             stack.save()
-//            try? stack.saveContext()
-
-//            let dropPin = MKPointAnnotation()
-//            dropPin.coordinate = pin.coordinate
 
             mapView.addAnnotation(pin)
         }

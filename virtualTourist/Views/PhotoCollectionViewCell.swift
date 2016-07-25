@@ -40,15 +40,4 @@ class PhotoCollectionViewCell: TaskCancelingCollectionViewCell {
         
     }
     
-//    override func prepareForReuse() {
-//        
-//        super.prepareForReuse()
-//        
-//        if photoImageView.image == nil {
-//            activityIndicator.startAnimating()
-//        }else {
-//            activityIndicator.stopAnimating()
-//        }
-//    }
-    
 }

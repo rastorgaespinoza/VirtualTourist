@@ -48,7 +48,6 @@ class FlickrClient {
             
             self.parseJSONWithCompletionHandler(data, completionHandler: completionHandler)
             
-//            self.validateData(data, response: response, error: error, completionForValidation: completionHandler)
         }
         
         task.resume()

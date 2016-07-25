@@ -27,10 +27,7 @@ class PhotoAlbumViewController: UIViewController {
     let reuseIdentifier = "cellPhoto" // identifier in collection view
     var pin: Pin?
     var stack: CoreDataStack!
-    
-    var task: NSURLSessionDataTask?
-    var blockOperations: [NSBlockOperation] = []
-    
+
     var fetchedResultsController: NSFetchedResultsController? {
         didSet{
             // whenever the frc changes, we execute the search and
@@ -54,7 +51,6 @@ class PhotoAlbumViewController: UIViewController {
         newCollectionButton.enabled = false
         stack = (UIApplication.sharedApplication().delegate as! AppDelegate).stack
         setReqion()
-        setCollectionViewFlowLayout()
 
     }
     
@@ -72,9 +68,25 @@ class PhotoAlbumViewController: UIViewController {
 
     }
     
+    // Layout the collection view
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        // Lay out the collection view so that cells take up 1/3 of the width,
+        // with no space in between.
+        let layout : UICollectionViewFlowLayout = UICollectionViewFlowLayout()
+        layout.sectionInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        layout.minimumLineSpacing = 0
+        layout.minimumInteritemSpacing = 0
+        
+        let width = floor(self.collectionView.frame.size.width/3)
+        layout.itemSize = CGSize(width: width, height: width)
+        collectionView.collectionViewLayout = layout
+    }
+    
     // MARK: - Methods
     @IBAction func newCollection(sender: AnyObject) {
-        print("se presionó la búsqueda de una nueva collection")
         if selectedIndexes.isEmpty {
             deleteAllPhotos()
             searchByLatLong()
@@ -82,16 +94,6 @@ class PhotoAlbumViewController: UIViewController {
             deleteSelectedPhotos()
         }
         
-    }
-    
-    
-    private func setCollectionViewFlowLayout(){
-        let space: CGFloat = 3.0
-        let dimensionWidth = (view.frame.size.width - (2 * space)) / 3.0
-        
-        collectionViewFlowLayout.minimumInteritemSpacing = space
-        collectionViewFlowLayout.minimumLineSpacing = space
-        collectionViewFlowLayout.itemSize = CGSizeMake(dimensionWidth, dimensionWidth)
     }
     
     private func setReqion() {
@@ -140,9 +142,7 @@ class PhotoAlbumViewController: UIViewController {
                         self.noImagesLabel.hidden = photos.isEmpty ? false : true
 
                     }
-                    
-                    
-                    
+
                 }else{
                     dispatch_async(dispatch_get_main_queue()) {
                         self.activityIndicator.stopAnimating()
