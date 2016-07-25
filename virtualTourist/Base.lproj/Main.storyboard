@@ -89,7 +89,11 @@
                                 <rect key="frame" x="0.0" y="556" width="600" height="44"/>
                                 <items>
                                     <barButtonItem style="plain" systemItem="flexibleSpace" id="3Pp-v5-fZg"/>
-                                    <barButtonItem title="New Collection" id="1ut-r1-gvC"/>
+                                    <barButtonItem title="New Collection" id="1ut-r1-gvC">
+                                        <connections>
+                                            <action selector="newCollection:" destination="P2Q-Nu-QFZ" id="BPr-AE-MUL"/>
+                                        </connections>
+                                    </barButtonItem>
                                     <barButtonItem style="plain" systemItem="flexibleSpace" id="9Y1-Fi-Px0"/>
                                 </items>
                             </toolbar>
@@ -98,7 +102,7 @@
                             </mapView>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="afq-cq-qWJ">
                                 <rect key="frame" x="0.0" y="205" width="600" height="351"/>
-                                <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <collectionViewFlowLayout key="collectionViewLayout" minimumLineSpacing="10" minimumInteritemSpacing="10" id="UMd-A5-U5r">
                                     <size key="itemSize" width="50" height="50"/>
                                     <size key="headerReferenceSize" width="0.0" height="0.0"/>
@@ -113,7 +117,7 @@
                                             <rect key="frame" x="0.0" y="0.0" width="100" height="100"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
-                                                <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="dlh-Ji-T6z">
+                                                <imageView userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="dlh-Ji-T6z">
                                                     <rect key="frame" x="0.0" y="0.0" width="100" height="100"/>
                                                 </imageView>
                                                 <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" hidesWhenStopped="YES" animating="YES" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="YsL-s8-5lZ">
@@ -143,26 +147,43 @@
                                     <outlet property="delegate" destination="P2Q-Nu-QFZ" id="gEM-8z-9nd"/>
                                 </connections>
                             </collectionView>
+                            <label hidden="YES" opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="No Images Found" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5Zk-9N-MCr">
+                                <rect key="frame" x="164" y="360" width="272" height="42"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="35"/>
+                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" hidesWhenStopped="YES" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="tEd-R9-zi6">
+                                <rect key="frame" x="282" y="362" width="37" height="37"/>
+                                <color key="color" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                            </activityIndicatorView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
+                            <constraint firstItem="tEd-R9-zi6" firstAttribute="centerY" secondItem="afq-cq-qWJ" secondAttribute="centerY" id="2m9-IJ-vhh"/>
+                            <constraint firstItem="tEd-R9-zi6" firstAttribute="centerX" secondItem="afq-cq-qWJ" secondAttribute="centerX" id="3hH-KT-vGD"/>
                             <constraint firstItem="afq-cq-qWJ" firstAttribute="height" secondItem="LWs-Iq-lLZ" secondAttribute="height" multiplier="2.5" id="5Xx-I1-ZPk"/>
                             <constraint firstItem="LWs-Iq-lLZ" firstAttribute="top" secondItem="PCh-zM-Lde" secondAttribute="bottom" id="8O6-ZZ-jpA"/>
                             <constraint firstItem="afq-cq-qWJ" firstAttribute="top" secondItem="LWs-Iq-lLZ" secondAttribute="bottom" constant="1" id="9NQ-qf-LHg"/>
+                            <constraint firstItem="5Zk-9N-MCr" firstAttribute="centerY" secondItem="afq-cq-qWJ" secondAttribute="centerY" id="HXk-CX-97e"/>
                             <constraint firstItem="4BT-m7-dW7" firstAttribute="top" secondItem="xq1-Ef-YEE" secondAttribute="bottom" id="KFy-wX-DzS"/>
                             <constraint firstAttribute="trailingMargin" secondItem="xq1-Ef-YEE" secondAttribute="trailing" constant="-20" id="KSq-p6-2jw"/>
                             <constraint firstAttribute="trailingMargin" secondItem="LWs-Iq-lLZ" secondAttribute="trailing" constant="-20" id="MCE-jh-qvO"/>
                             <constraint firstItem="LWs-Iq-lLZ" firstAttribute="leading" secondItem="M3Z-cV-yJ0" secondAttribute="leadingMargin" constant="-20" id="WW9-s3-uCh"/>
                             <constraint firstItem="xq1-Ef-YEE" firstAttribute="leading" secondItem="M3Z-cV-yJ0" secondAttribute="leadingMargin" constant="-20" id="YS3-iY-WSi"/>
                             <constraint firstItem="afq-cq-qWJ" firstAttribute="leading" secondItem="M3Z-cV-yJ0" secondAttribute="leadingMargin" constant="-20" id="dsL-GN-jnh"/>
+                            <constraint firstItem="5Zk-9N-MCr" firstAttribute="centerX" secondItem="afq-cq-qWJ" secondAttribute="centerX" id="gVq-cu-NaQ"/>
                             <constraint firstAttribute="trailingMargin" secondItem="afq-cq-qWJ" secondAttribute="trailing" constant="-20" id="qWp-Pj-spQ"/>
                             <constraint firstItem="xq1-Ef-YEE" firstAttribute="top" secondItem="afq-cq-qWJ" secondAttribute="bottom" id="wEc-SU-rZR"/>
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="activityIndicator" destination="tEd-R9-zi6" id="fbS-OT-dPg"/>
                         <outlet property="collectionView" destination="afq-cq-qWJ" id="NcP-r9-bJX"/>
                         <outlet property="collectionViewFlowLayout" destination="UMd-A5-U5r" id="7w4-Py-ayv"/>
                         <outlet property="mapView" destination="LWs-Iq-lLZ" id="MrQ-uo-92J"/>
+                        <outlet property="newCollectionButton" destination="1ut-r1-gvC" id="lg0-yt-3X1"/>
+                        <outlet property="noImagesLabel" destination="5Zk-9N-MCr" id="5Xz-dh-jbT"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="rIn-SA-4DE" userLabel="First Responder" sceneMemberID="firstResponder"/>

@@ -11,7 +11,7 @@ import MapKit
 import CoreData
 
 class PhotoAlbumViewController: UIViewController {
-
+    
     // MARK: Properties
     let reuseIdentifier = "cellPhoto" // identifier in collection view
     var pin: Pin?
@@ -28,9 +28,12 @@ class PhotoAlbumViewController: UIViewController {
         }
     }
 
+    @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
+    @IBOutlet weak var noImagesLabel: UILabel!
     @IBOutlet weak var mapView: MKMapView!
     @IBOutlet weak var collectionView: UICollectionView!
     @IBOutlet weak var collectionViewFlowLayout: UICollectionViewFlowLayout!
+    @IBOutlet weak var newCollectionButton: UIBarButtonItem!
     
     // MARK: - Life Cycle
     override func viewDidLoad() {
@@ -44,21 +47,31 @@ class PhotoAlbumViewController: UIViewController {
     
     override func viewWillAppear(animated: Bool) {
         super.viewWillAppear(animated)
-        if fetchedResultsController?.fetchedObjects?.count == 0 {
-            searchByLatLong()
+        if let photos = fetchedResultsController?.fetchedObjects as? [Photo] {
+            if photos.isEmpty {
+                
+                searchByLatLong()
+            }
+        }else{
+            
         }
-//        if fetchedResultsController.fetchedObjects?.count > 0 {
-//        if let pin = pin,
-//            let photos = pin.photos{
-//            if photos.array.isEmpty {
-//                searchByLatLong()
-//            }
-//        }else{
+//        if fetchedResultsController?.fetchedObjects?.count == 0 {
 //            searchByLatLong()
+//        }else{
+////            checkForAllPhotoComplete()
 //        }
+
     }
     
     // MARK: - Methods
+    @IBAction func newCollection(sender: AnyObject) {
+        print("se presionó la búsqueda de una nueva collection")
+        activityIndicator.startAnimating()
+        deleteAllPhotos()
+        searchByLatLong()
+    }
+    
+    
     private func setCollectionViewFlowLayout(){
         let space: CGFloat = 3.0
         let dimensionWidth = (view.frame.size.width - (2 * space)) / 3.0
@@ -86,11 +99,19 @@ class PhotoAlbumViewController: UIViewController {
     
     private func searchByLatLong() {
         if let pin = pin {
-            FlickrClient.sharedInstance().getPhotosByLocation(pin, completionPhotos: { (success, photoURLs, errorString) in
+            FlickrClient.sharedInstance().getPhotosForPin(pin, completionPhotos: { (success, photoURLs, errorString) in
+//                <#code#>
+//            })
+//            FlickrClient.sharedInstance().getPhotosByLocation(pin, completionPhotos: { (success, photoURLs, errorString) in
+                var photos = [Photo]()
+                
                 if success {
-                    var photos = [Photo]()
+                    
                     dispatch_async(dispatch_get_main_queue()) {
-                        for url in photoURLs {
+                        self.activityIndicator.stopAnimating()
+                        
+                        let urls  = photoURLs["url_m"] as! [String]
+                        for url in urls {
                             
                             let picture = Photo(url: url, context: self.stack.context)
                             
@@ -98,68 +119,129 @@ class PhotoAlbumViewController: UIViewController {
                             
                             photos.append(picture)
                         }
-                        self.downloadImage(photos)
+                        
+                        self.noImagesLabel.hidden = photos.isEmpty ? false : true
+
+//                        self.checkForAllPhotoComplete()
+//                        self.downloadImages(photos)
                     }
                     
-//                    let photos = photoURLs.map({ (url: String) -> Photo in
-//                        
-//                        let photo = Photo(url: url, context: self.stack.context)
-//                        
-//                        photo.pin = self.pin
-//                        
-//                        return photo
-//                    })
                     
                     
+                }else{
+                    dispatch_async(dispatch_get_main_queue()) {
+                        self.activityIndicator.stopAnimating()
+                        self.noImagesLabel.hidden = photos.isEmpty ? false : true
+                    }
                 }
                 
             })
         }
-        
-//            displayImageFromFlickrBySearch(methodParameters)
-//        }
-//        else {
-//            setUIEnabled(true)
-//            photoTitleLabel.text = "Lat should be [-90, 90].\nLon should be [-180, 180]."
-//        }
-    }
-    
-    func downloadImage(photos: [Photo]){
-        
-        for photo in photos {
-            if photo.image == nil {
-                FlickrClient.sharedInstance().downloadImage(photo.url!, completion: { (imageData, errorString) in
-
-                    dispatch_async(dispatch_get_main_queue()) {
-                        if let imageData = imageData {
-                            photo.imageData = imageData
-                        }
-                    }
-                    
-                })
-            }
+        else{
+            activityIndicator.stopAnimating()
+            noImagesLabel.hidden = false
         }
         
-//        stack.performBackgroundBatchOperation { (workerContext) in
-//            
-//            for photo in photos {
-//                if photo.image == nil {
-//                    FlickrClient.sharedInstance().downloadImage(photo.url!, completion: { (imageData, errorString) in
+    }
+    
+    func deleteAllPhotos() {
+
+        for photo in fetchedResultsController!.fetchedObjects as! [Photo] {
+            stack.context.deleteObject(photo)
+        }
+    }
+    
+//    func downloadImages(photos: [Photo]){
+//        
+//        for photo in photos {
+//            if photo.image == nil {
+//                FlickrClient.sharedInstance().downloadImage(photo.url!, completion: { (imageData, errorString) in
+//
+//                    dispatch_async(dispatch_get_main_queue()) {
 //                        if let imageData = imageData {
 //                            photo.imageData = imageData
 //                        }
-//                        
-//                    })
+//                    }
+//                    
+//                })
+//            }
+//        }
+//        
+//    }
+
+    func checkForAllPhotoComplete(){
+        
+        if let photos = pin?.photos?.array as? [Photo] where photos.count > 0 {
+            let objectIDs = photos.map({ (photo) -> NSManagedObjectID in
+                return photo.objectID
+            })
+            
+            
+            stack.performBackgroundBatchOperation { (workerContext) in
+                
+                var finishedTasks = false
+                
+                while !finishedTasks {
+                    for objectID in objectIDs {
+                        let photo = workerContext.objectWithID(objectID) as! Photo
+                        if photo.imageData == nil {
+                            finishedTasks = false
+                            break
+                        }else{
+                            finishedTasks = true
+                        }
+                    }
+                    print(finishedTasks)
+                }
+            }
+        }
+//        if let photos = self.fetchedResultsController?.fetchedObjects as? [Photo] where photos.count > 0 {
+        
+            
+
+            
+//            for photo in photos {
+//                if photo.imageData == nil {
+//                    finishedTasks = false
+//                    break
+//                }else{
+//                    finishedTasks = true
 //                }
 //            }
 //        }
+        
+//                dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0)) {
+//        
+//            var finishedTasks = false
+//            
+//            while !finishedTasks {
+//                if let photos = self.fetchedResultsController?.fetchedObjects as? [Photo] where photos.count > 0 {
+//                    for photo in photos {
+//                        if photo.imageData == nil {
+//                            finishedTasks = false
+//                            break
+//                        }else{
+//                            finishedTasks = true
+//                        }
+//                    }
+//                }
+//                
+//                print(finishedTasks)
+//            }
+//        }
+        
     }
-    
-    
-
 }
 
 extension PhotoAlbumViewController: UICollectionViewDataSource {
+    
+    func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
+        if let fc = fetchedResultsController{
+            return (fc.sections?.count)!
+        }else {
+            return 1
+        }
+    }
     
     func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
 
@@ -176,14 +258,7 @@ extension PhotoAlbumViewController: UICollectionViewDataSource {
         return cell
     }
     
-    func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
-        if let fc = fetchedResultsController{
-            return (fc.sections?.count)!
-        }else {
-            return 1
-        }
-    }
-    
+
     func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         if let fc = fetchedResultsController{
             return (fc.sections![section].numberOfObjects)

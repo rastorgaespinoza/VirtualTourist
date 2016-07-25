@@ -35,6 +35,8 @@ extension FlickrClient {
         static let BoundingBox = "bbox"
         static let Page = "page"
         static let PerPage = "per_page"
+        static let Latitude = "lat"
+        static let Longitude = "lon"
     }
     
     // MARK: Flickr Parameter Values
@@ -76,6 +78,7 @@ extension FlickrClient {
     
     struct Images {
         static let placeHolder = UIImage(named: "placeholder")!
+        static let noImage = UIImage(named: "noImage")!
     }
     
 }

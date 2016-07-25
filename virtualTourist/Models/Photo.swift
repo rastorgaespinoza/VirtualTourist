@@ -13,11 +13,21 @@ import CoreData
 class Photo: NSManagedObject {
     
     var image: UIImage? {
-        if let imageData = imageData{
-            return UIImage(data: imageData)
-        }else{
-            return nil
+        get{
+            if let imageData = imageData{
+                return UIImage(data: imageData)
+            }else{
+                return nil
+            }
         }
+        set{
+            if let newValue = newValue {
+                imageData = UIImagePNGRepresentation(newValue)
+            }else{
+                imageData = nil
+            }
+        }
+        
     }
     
     convenience init(url: String, context: NSManagedObjectContext){

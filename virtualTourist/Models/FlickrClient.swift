@@ -12,7 +12,7 @@ class FlickrClient {
     
     typealias completionData = (result: AnyObject!, error: NSError?) -> Void
     typealias completionForViewController = (success: Bool, errorString: String?) -> Void
-    typealias completionWithURLPhotos = (success: Bool, photoURLs: [String], errorString: String?) -> Void
+    typealias completionWithURLPhotos = (success: Bool, photoURLs: [String: AnyObject], errorString: String?) -> Void
     
     let session: NSURLSession!
     let stack: CoreDataStack!
@@ -32,18 +32,28 @@ class FlickrClient {
     }
     
 
-    func taskForMethod(method: NSURL, completionHandler: completionData ) {
+    func taskForMethod(method: NSURL, completionHandler: completionData ) -> NSURLSessionDataTask {
         
         // 1. Configuración del request
-        let request = NSMutableURLRequest()
-        request.URL = method
-        request.HTTPMethod = HTTPMethods.GET
+        let request = NSURLRequest(URL: method)
         
         let task = session.dataTaskWithRequest(request) { (data, response, error) -> Void in
-            self.validateData(data, response: response, error: error, completionForValidation: completionHandler)
+            
+            let resultData = self.validateData2(data, response: response, error: error)
+            
+            guard let data = resultData.data else{
+                completionHandler(result: nil, error: resultData.error!)
+                return
+            }
+            
+            self.parseJSONWithCompletionHandler(data, completionHandler: completionHandler)
+            
+//            self.validateData(data, response: response, error: error, completionForValidation: completionHandler)
         }
         
         task.resume()
+        
+        return task
         
     }
 
@@ -105,6 +115,33 @@ class FlickrClient {
         }
         
         parseJSONWithCompletionHandler(data, completionHandler: completionForValidation)
+    }
+    
+    private func validateData2(data: NSData?, response: NSURLResponse?, error: NSError?) -> (data: NSData?, error: NSError?){
+        
+        func sendError(error: String) -> (data: NSData?, error: NSError?){
+            let userInfo = [NSLocalizedDescriptionKey: error]
+            let error = NSError(domain: "validateData", code: 2, userInfo: userInfo)
+            return (data: nil, error: error)
+
+        }
+        
+        /* GUARD: Was there an error? */
+        guard (error == nil) else {
+            return sendError("There was an error in request. (\(error!.code))")
+        }
+        
+        /* GUARD: Was there any data returned? */
+        guard let data = data else {
+            return sendError("your request does not return data")
+        }
+        
+        /* GUARD: Did we get a successful 2XX response? */
+        guard let statusCode = (response as? NSHTTPURLResponse)?.statusCode where statusCode >= 200 && statusCode <= 299 else {
+            return sendError("your request returned an invalid state. (\((response as? NSHTTPURLResponse)?.statusCode))")
+        }
+        
+        return (data: data, error: nil)
     }
     
     
